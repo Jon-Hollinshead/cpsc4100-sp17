@@ -1,0 +1,572 @@
+
+* How can we describe Java?
+
+  - exclusively object-oriented
+  - class-oriented / polymorphic
+  - multithreaded (concurrent)
+  - structured (subroutines, blocks, formal loops)
+  - garbage collected (automatic memory management)
+  - call-by-value parameter passing (despite multiple references to shared
+    object)
+  - imperative (statements change state / procedural)
+  - generic
+  - portable (write once / run anywhere) / byte-compiled
+  - statically typed
+  - strongly typed (type safety)
+  - statically scoped 
+  - exceptions
+  - reflective
+
+
+* General Information
+  
+** binding times
+   The act of associating /names/ with properties (data type, address, value )
+   is called /binding/, and different properties are bound at different times.
+
+
+   #+begin_src C
+     int i;
+     void main() 
+     {
+         for (i=1; i<100; i++)
+             fred(i);
+     }
+   #+end_src
+
+   - *language definition time*
+              
+     meaning of keywords is bound -- all implementations must behave the
+     same way (void, for)
+
+   - *language implementation time*
+
+     e.g. the range of values for ~int~ is implementation dependent.  (not the 
+     same in java)
+
+   - *compile time*
+
+     data type for ~i~ is bound here.  (static typing)
+
+   - *link time*
+
+     definition of ~fred~
+
+   - *load time*
+
+     memory address for all of these symbols
+
+   - *runtime*
+
+     ~i~ takes on a sequence of values
+
+
+   - early binding : before runtime   / late binding == runtime binding
+
+   - not all language systems use all times (interpreters are not compiled)
+
+
+
+** Typing
+
+*** type binding time
+    + static: data types declared in source code
+    + dynamic: data types determined at runtime.  variable datatypes may change
+
+    
+*** type safety ( more subjective )
+    + strong: program will not run if types are misused
+    + weak: implicit casting, massaging values between actual and required
+      types
+
+
+   
+
+** Parameter passing
+
+   + formal parameters appear in subroutine definition
+   + actual parameters appear in subroutine call
+
+
+*** parameter /correspondence/
+    + java and C use positional parameters
+    + other languages may have keyword parameters
+    + default parameters (C++ has this)
+
+*** call by value (pass by value)
+    + formal parameters are local variables in the stack frame (aka
+      /activation record/) of the called method
+    + initialized with the value of the corresponding actual parameter
+
+     
+*** call by reference (pass by reference)
+   
+
+**** lvalues
+
+     All variables have two attributes
+     + *lvalue*: assignable memory location
+     + *rvalue*: value
+
+
+     These are identified by their position in an assignment statement.
+
+     Typical for imperative languages.  Context tells us which attribute of the
+     variable we care about.
+
+     Incidentally, dereferenced pointers can function as either lvalues or rvalues
+
+**** call-by-reference semantics
+
+     The lvalue of the actual parameter is computed before the method executes.
+     Formal parameters are replaced with actual parameter's lvalue.
+     Effectively, the formal parameters become aliases for the actual
+     parameters.
+
+    
+**** C++ syntax
+
+     #+begin_src c++
+       void process(int& x)
+       {
+           x=10;
+       }
+
+
+       main()
+       {
+           int x =0;
+           process(x);                 // note, it's impossible to tell here that x
+                                       // can be changed by the subroutine -- you
+                                       // have to look at the subroutine
+                                       // definition/declaration
+       }
+     #+end_src
+
+
+
+    
+
+
+***  macro parameters (call by macro expansion)
+     + free vs. bound variables (binding time)
+       in any program fragment, an occurrence of a variable that is not bound
+       is called /free/
+
+     + more on this when we talk about closures in the context of functional programming
+
+     + actual parameters to swap are program fragments with free variables
+       ~temp~ and ~a~.  When substitution occurs, ~temp~ is captured by the local
+       definition in the macro body
+
+
+       + variable capture
+
+         #+begin_src C
+           // temp is bound
+           #define SWAP(v1,v2) { int temp=v1; v1=v2; v2=temp; }
+
+           int main(int argc, char *argv[])
+           {
+               int a = 5;
+               int b = 6;
+
+               printf("a: %d; b: %d\n", a, b);
+               SWAP(a,b);
+               printf("a: %d; b: %d\n", a, b);
+
+               int temp=10;
+
+               printf("a: %d; temp: %d\n", a, temp);
+
+               //free variables a and temp
+               SWAP(a,temp);
+               printf("a: %d; temp: %d\n", a, temp);
+
+
+               return 0;
+           }
+
+         #+end_src
+
+
+*** call-by-name semantics
+
+    formal parameters are substituted (in a capture-avoiding way) with "text"
+    of actual parameters
+
+    also: *call-by-need* semantics: this is done in a memoized way (values are
+    cached so it parameters are only evaluated once.  This should be faster
+    for certain applications)
+
+
+** Parameter evaluation
+   + applicative order: parameters are evaluated before subroutine is called
+     (this is typical for C, Java, scheme...)
+   + normal order: actual parameters are substituted into subroutine body and
+     evaluated after subroutine call begins
+     - see, [[call-by-name semantics]]
+
+
+** Symbol table
+   A data structure used internally by compilers and language interpreters to
+   store variables and their values.
+
+
+
+
+* C
+
+  - originally 1973 by Dennis Ritchie (The R in K&R)
+  - ANSI C standard since 1989
+  - imperative: statements affect program state
+  - structured: formal control structures / blocks
+  - static typing: data type property assigned at compile time
+  - weakly typed (=void*=) : implicit type casting under some conditions
+  - compiles all the way to the hardware (executables not portable)
+  - allows for raw memory management and manipulation
+
+
+** hello world (the parts of)
+
+   #+begin_src C
+     #include <stdio.h>              /* preprocessor directive */
+
+     int main(int argc, char *argv[]) /* program entry point with command line arguments */
+     {
+         printf("Hello World\n");    /* a subroutine that does IO -- declared in stdio.h */
+         return 0;                   /* return code from main -> exit code for program */
+     }
+
+   #+end_src
+
+
+** *language system*: system of components to make a programming language practical
+
+** source --[preprocessor]--> translation unit --[compiler]--> object file --[linker]--> executable
+
+*** A translation unit -- source for a single object file
+     
+** C data types
+
+   :  void
+   :  char
+   :  int
+   :  float
+   :  double
+   :
+   :  // these assume int
+   :  short
+   :  long
+   :  signed
+   :  unsigned
+   :
+   : // may be optimized by using read only memory
+   : const
+   : 
+   : // no implementation-independent semantics
+   : volatile
+
+
+    
+** ~sizeof~ operator tells how many bytes a /thing/ uses (data type or variable / value)
+
+   
+** arrays and pointers are somewhat interchangeable
+   : int values[10];  -->   int* values
+
+
+*** /string/ is a pointer to a null-terminated array of ~char~
+    + literal strings are read only, because they are stored in read-only
+      memory
+
+
+** struct union 
+
+   #+begin_src C
+
+     struct example 
+     {
+         int value;
+         char name[10];
+     };
+
+
+     // one or the other.. typically used with some companion variable to
+     // distinguish which field is active -- size is largest possible size
+     union u_example 
+     {
+         int value;
+         char name[10];
+     };
+
+
+
+     typedef struct 
+     {
+         int value;
+         char name[10];
+     } example;
+
+   #+end_src
+
+
+
+** typedef
+   syntactic renaming of a type
+
+   : typedef unsigned int uint
+
+   The above makes ~uint~ a valid data type for declaring variables and return
+   values.
+    
+
+** enum
+
+   : enum foo {FOO_A, FOO_B, FOO_C};
+
+
+** pointer / address of
+   + all values used above were stack-allocated
+   + still call by value
+   + pointers allow functions to change parameters, but it is explicit
+    
+
+
+*** use pointers to allow subroutine to modify a variable
+
+    This is different from call-by-reference, but leads to a similar result.
+
+
+    #+begin_src C
+      void changeIt(int* int_pointer)
+      {
+          *int_pointer = 5;           /* dereferencing a pointer is a valid lvalue */
+      }
+
+
+      void otherFunc()
+      {
+          int x=10;
+          printf("%d\n", x);          /* prints 10 */
+          changeIt(&x);               /* call subroutine with address of x */
+          printf("%d\n", x);          /* prints 5 */
+      }
+    #+end_src
+
+
+** malloc / free vs. stack allocated (auto)
+
+   : void* malloc(size_t size);
+
+*** anything malloc'd or strdup'd (or otherwise allocated on the heap) eventually needs to be freed
+   : void free(void* ptr);
+
+
+
+   #+begin_src C
+     int* blob = malloc(500*sizeof(int)); /* array of 500 ints */
+
+     // do something with blob
+
+     // eventually do this ...
+     free(blob);
+
+   #+end_src
+
+
+** function pointers
+
+   A way to store a reference to an existing subroutine in a variable, or pass
+   in and out of a subroutine.  This does not make subroutines /first-class/ in
+   C, since the subroutines must exist at compile time.
+
+   #+begin_src c
+     int subroutine(int size)
+     {
+         printf("In a subroutine: %x\n!", data);
+         return size;
+     }
+
+     typedef int (*intfunc)(int);
+
+
+
+     int main(int argc, char *argv[])
+     {
+         // int (*func)(int) = subroutine;
+
+         intfunc func = subroutine;
+         func(50000);
+
+         return 0;
+     }
+
+   #+end_src
+
+
+
+** static storage specifier
+*** static local variables persist between subroutine calls   
+
+
+** static vs. external linkage
+*** function declaration vs definition
+*** static symbols are not visible to other translation units / object files during linking
+
+** preprocessor
+   + include files
+
+
+   + conditional compilation
+     + header files and ifdefs to avoid multiple symbol definitions with external linkage
+
+   + pragma (openmp / user-specified warnings, etc..)
+
+** macros
+
+   + macro expansions
+     * constants (object-like macro)
+       ~#define PI 3.14159~
+
+   * macros define locations where substitution occurs
+
+
+   * function-like macro
+
+     #+begin_src C
+       #define TIMESTEN(x) x*10
+       #define PLUSONE(x) x+1
+       #define SQUARE(x) ((x)*(x))
+
+       // remove ambiguity by over-parenthesizing 
+       int main(int argc, char *argv[])
+       {
+           printf("%d\n", TIMESTEN(10+10));
+           printf("%d\n", PLUSONE(10)*2);
+
+           // sqrt called twice
+           printf("%d\n", SQUARE(sqrt(10));
+           return 0;
+       }
+
+     #+end_src
+
+* Scheme
+
+  A lexically scoped dialect of Lisp
+
+  Strongly typed / dynamically typed.
+
+
+** data types
+   + numbers:   ~1.0~, ~45~, ~8+3i~, ...
+   + characters: ~#\x~
+   + booleans: ~#t~  ~#f~  (note this is different than ~#\t~ and ~#\f~)
+   + symbols: 'foo
+   + strings: "hello"
+   + vectors: ~#(1 2 3)~  -- like a fixed-length list
+          
+** procedures
+
+   + created with a ~lambda~ expression
+
+     #+begin_src scheme
+     (lambda (a b)
+       (+ a b))                              ;add a and b
+     #+end_src
+
+   + bound to a variable with the ~define~ special form
+
+     #+begin_src scheme
+       (define add2 (lambda (a b)
+                      (+ a b)))
+     #+end_src
+
+** function currying
+
+   concept from the lambda calculus where procedures may only take a single
+   parameter.
+
+   f(a,b) = {f'(a)}(b)
+
+   For example, if lambdas could only take one argument:
+   #+begin_src scheme
+     (define add (lambda (a) (lambda (b) (+ a b))))
+     ((add 5) 10)
+   #+end_src
+
+
+
+
+** read from user
+   + ~(read)~ -> symbol
+   + ~(use-modules (ice-9 readline))  (readline "enter a string")~ -> string
+
+   
+** control structures
+
+   + if/else
+     + eq? equal? ...
+   + when/unless
+   + loops do exist:  while / do
+   + begin  (implied within lambda)
+     
+
+   
+** working with lists/pairs
+
+   + cons
+   + car / cdr
+   + car, caar,  cddr, cadr, etc.
+   + list / pair procedures
+   + memq , assoc
+
+
+   ~cons~ creates a new list with the first parameter stuck on the beginning of
+   the second.
+
+   #+begin_src text
+     scheme@(guile-user)> (cons 'a '(1 2 3))
+     $2 = (a 1 2 3)
+   #+end_src
+
+   ~car~ returns the first item in a list.  ~cdr~ returns the rest of the list,
+   after the ~car~
+
+   #+begin_src text
+     scheme@(guile-user)> (car '(this that the other))
+     $3 = this
+     scheme@(guile-user)> (cdr '(this that the other))
+     $4 = (that the other)
+   #+end_src
+
+   
+** recursion as iteration
+   + factorial
+   + map, filter
+
+
+** binding local variables introduce new variables
+   + let, let*, letrec, letrec*
+     let* -> nested lets
+   + nested define -> letrec
+
+
+** closures
+   A function with environment containing free variables bound in some other
+   /environment/ that existed when the function was created.
+
+   #+begin_src scheme
+     (define (make-adder base)
+       (lambda (i)
+         (+ base i)))
+   #+end_src
+
+** imperatives
+   + ~set!~ (and many other variants)
+   
+** lambda as object
+   + closures and imperatives together give object-like functionality
+   + see [[file:scheme/scheme5.scm][scheme5.scm]]
+
